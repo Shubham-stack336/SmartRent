@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartRent</title>
+<link rel="icon" href="data:,">
+<style>
+  body { font-family: system-ui, sans-serif; background:#f4f6fa; margin:0; display:flex; justify-content:center; padding:24px 16px; }
+  .card { background:#fff; max-width:420px; width:100%; padding:24px; border-radius:12px; box-shadow:0 2px 12px #0001; }
+  h1 { margin-top:0; }
+  label { display:block; margin:12px 0 4px; font-size:14px; color:#444; }
+  input, select { width:100%; padding:9px; border:1px solid #ccd; border-radius:6px; font-size:15px; box-sizing:border-box; }
+  button { width:100%; margin-top:20px; padding:12px; background:#2f5bea; color:#fff; border:0; border-radius:6px; font-size:16px; cursor:pointer; }
+  #result { margin-top:20px; text-align:center; }
+  #result .big { font-size:30px; font-weight:700; color:#2f5bea; }
+  .err { color:#c0392b; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>SmartRent</h1>
+  <p>Estimate monthly rent for a property.</p>
+  <form id="form">
+    <label>City</label><select id="city"></select>
+    <label>Locality</label><input id="locality" list="localities" required autocomplete="off"><datalist id="localities"></datalist>
+    <label>Area (sq ft)</label><input id="area" type="number" min="1" max="10000" value="900" required>
+    <label>Bedrooms</label><input id="beds" type="number" min="1" max="10" value="2" required>
+    <label>Bathrooms</label><input id="bathrooms" type="number" min="0" max="10" value="2" required>
+    <label>Furnishing</label><select id="furnishing"></select>
+    <button>Predict rent</button>
+  </form>
+  <div id="result"></div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const fmt = n => "₹" + Math.round(n).toLocaleString("en-IN");
+let opts;
+
+function fillLocalities() {
+  $("localities").innerHTML = opts.localities[$("city").value].map(l => `<option value="${l}">`).join("");
+  $("locality").value = "";
+}
+
+fetch("/api/options").then(r => r.json()).then(o => {
+  opts = o;
+  $("city").innerHTML = o.cities.map(c => `<option>${c}</option>`).join("");
+  $("furnishing").innerHTML = o.furnishing.map(f => `<option>${f}</option>`).join("");
+  fillLocalities();
+});
+$("city").addEventListener("change", fillLocalities);
+
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const body = {
+    locality: $("locality").value, city: $("city").value,
+    area: +$("area").value, beds: +$("beds").value,
+    bathrooms: +$("bathrooms").value, furnishing: $("furnishing").value,
+  };
+  const res = await fetch("/api/predict", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body) });
+  const out = $("result");
+  if (!res.ok) { out.innerHTML = '<span class="err">Invalid input, please check the fields.</span>'; return; }
+  const d = await res.json();
+  out.innerHTML = `<div class="big">${fmt(d.rent)}/month</div><div>Likely range: ${fmt(d.low)} – ${fmt(d.high)}</div>`;
+});
+</script>
+</body>
+</html>
