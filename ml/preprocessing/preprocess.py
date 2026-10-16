@@ -1,6 +1,6 @@
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 FEATURES = ["locality", "city", "area", "beds", "bathrooms", "furnishing"]
 CAT_COLS = ["locality", "city", "furnishing"]
@@ -27,8 +27,9 @@ def split_features_target(df):
     return X, Y
 
 
-def build_preprocessor():
+def build_preprocessor(scale_numeric=False):
+    num = StandardScaler() if scale_numeric else "passthrough"
     return ColumnTransformer([
         ("cat", OneHotEncoder(handle_unknown="ignore"), CAT_COLS),
-        ("num", "passthrough", NUM_COLS),
+        ("num", num, NUM_COLS),
     ])

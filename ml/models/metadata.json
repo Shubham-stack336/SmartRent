@@ -1,6 +1,17 @@
 {
+  "model": "random_forest",
   "mae": 19908.110906603353,
   "r2": 0.7262197014393563,
+  "comparison": {
+    "random_forest": {
+      "mae": 19908.110906603353,
+      "r2": 0.7262197014393563
+    },
+    "neural_network_4layer": {
+      "mae": 22548.98775041607,
+      "r2": 0.42780846619977986
+    }
+  },
   "cities": [
     "Bangalore",
     "Mumbai",
